@@ -1,0 +1,95 @@
+#!/bin/bash
+set +x
+
+BASEDIR=`cd "$(dirname "$0")"; pwd`
+
+# Config file
+SYNC_CONFIG="$BASEDIR"/config; [ -f "$SYNC_CONFIG" ] && source "$SYNC_CONFIG"
+
+# File with excluded files from rsync
+SYNC_EXCLUDE_FROM="$BASEDIR"/exclude-from
+
+# If true, enable rsync in overflow directory
+SYNC_OVERFLOW=${SYNC_OVERFLOW:-false}
+
+# DEFAULT values
+# They can be override with the values specified in $SYNC_CONFIG file
+case "$OSTYPE" in
+    cygwin)
+        LOCAL=${LOCAL:-/cygdrive/d}
+        REMOTE_PENDRIVE=${REMOTE_PENDRIVE:-/cygdrive/h/data}
+        ;;
+    darwin*)
+        LOCAL=${LOCAL:-/Volumes/DATA}
+        LOCAL_OVERFLOW=${LOCAL_OVERFLOW:-/Volumes/1TB}
+        REMOTE_HD=${REMOTE_HD:-/Volumes/pj/data}
+        REMOTE_PENDRIVE=${REMOTE_PENDRIVE:-/Volumes/LIVE/data}
+        REMOTE_OVERFLOW=${REMOTE_OVERFLOW:-/Volumes/LIVE/overflow}
+        ;;
+    linux*)
+        LOCAL=${LOCAL:-/data}
+        LOCAL_OVERFLOW=${LOCAL_OVERFLOW:-/overflow}
+        REMOTE_PENDRIVE=${REMOTE_PENDRIVE:-/run/media/pj/LIVE/data}
+        REMOTE_HD=${REMOTE_HD:-/run/media/pj/pj/data}
+        REMOTE_OVERFLOW=${REMOTE_OVERFLOW:-/run/media/pj/pj/overflow}
+        ;;
+    *)
+        echo "\"$OSTYPE\" is not supported. Aborted ..."
+        exit 1
+        ;;
+esac
+
+case "$1" in
+    from-pendrive)
+        ORIGIN=$REMOTE_PENDRIVE
+        DEST=$LOCAL
+    ;;
+    from-hd)
+        ORIGIN=$REMOTE_HD
+        ORIGIN_OVERFLOW=$REMOTE_OVERFLOW
+        DEST=$LOCAL
+        DEST_OVERFLOW=$LOCAL_OVERFLOW
+    ;;
+    to-pendrive)
+        ORIGIN=$LOCAL
+        DEST=$REMOTE_PENDRIVE
+    ;;
+    to-hd)
+        ORIGIN=$LOCAL
+        ORIGIN_OVERFLOW=$LOCAL_OVERFLOW
+        DEST=$REMOTE_HD
+        DEST_OVERFLOW=$REMOTE_OVERFLOW
+    ;;
+    *)
+    echo "$0 [from|to]-[pendrive|hd]"
+    exit 1
+esac
+
+if ! [ -d "$ORIGIN" ]
+then
+    echo "ORIGIN ($ORIGIN) does'nt exists!"
+    exit 1
+fi
+
+if ! [ -d "$DEST" ]
+then
+    mkdir -p "$DEST"
+    if ! touch "$DEST/$$.tmp"
+    then
+        echo "Could not write files on DEST ($DEST)!"
+        exit 1
+    else
+        rm "$DEST/$$.tmp"
+    fi
+fi
+
+rsync -rtvD --no-owner --no-group --update --delete --exclude-from="$SYNC_EXCLUDE_FROM" --modify-window=1 $ORIGIN/ $DEST/
+
+case "$1" in
+    to-hd|from-hd)
+        if $SYNC_OVERFLOW
+        then
+            rsync -rtvD --no-owner --no-group --update --delete --exclude-from="$SYNC_EXCLUDE_FROM" --modify-window=1 $ORIGIN_OVERFLOW/ $DEST_OVERFLOW/
+        fi
+        ;;
+esac
