@@ -22,14 +22,14 @@ case "$OSTYPE" in
     darwin*)
         LOCAL=${LOCAL:-/Volumes/DATA}
         LOCAL_OVERFLOW=${LOCAL_OVERFLOW:-/Volumes/1TB}
+        REMOTE_PENDRIVE=${REMOTE_PENDRIVE:-/Volumes/PJPD}
         REMOTE_HD=${REMOTE_HD:-/Volumes/pj/data}
-        REMOTE_PENDRIVE=${REMOTE_PENDRIVE:-/Volumes/LIVE/data}
-        REMOTE_OVERFLOW=${REMOTE_OVERFLOW:-/Volumes/LIVE/overflow}
+        REMOTE_OVERFLOW=${REMOTE_OVERFLOW:-/Volumes/pj/overflow}
         ;;
     linux*)
         LOCAL=${LOCAL:-/data}
         LOCAL_OVERFLOW=${LOCAL_OVERFLOW:-/overflow}
-        REMOTE_PENDRIVE=${REMOTE_PENDRIVE:-/run/media/pj/LIVE/data}
+        REMOTE_PENDRIVE=${REMOTE_PENDRIVE:-/run/media/pj/PJPD}
         REMOTE_HD=${REMOTE_HD:-/run/media/pj/pj/data}
         REMOTE_OVERFLOW=${REMOTE_OVERFLOW:-/run/media/pj/pj/overflow}
         ;;
